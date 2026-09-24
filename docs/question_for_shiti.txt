@@ -1,0 +1,300 @@
+QUESTIONS FOR SHITI
+===================
+Project: AI Learning Assistant / AI Study Companion POC (MyClassBoard)
+Sources read: project_requirements.txt and AI_Study_Companion_Edtech_POC.docx
+
+How to answer: write your answer under each "A:" line. One-word answers are fine.
+Where I have a default, it is marked [My default]. If you agree, just write "ok" and I will go with it.
+Section A matters most because the two documents disagree, and the answers change what I build.
+
+
+------------------------------------------------------------------
+A. THE TWO DOCUMENTS DISAGREE - PLEASE PICK A SOURCE OF TRUTH
+------------------------------------------------------------------
+
+The .txt brief describes 4 modules: Question Bank, Parent Summary, Handwriting OCR, and the Adaptive Interview Bot (text + voice).
+The .docx describes 3 modules: Notes-to-Questions, Assessment & Insights (students take tests in-app, pictorial report, weak-topic routing), and Handwriting OCR.
+The two overlap on Question Bank and OCR. The rest differs.
+
+A1. Which document is the source of truth for scope?
+    a) The .txt (4 modules). Treat the .docx as the earlier or client-facing pitch. [My default]
+    b) The .docx (3 modules).
+    c) Union of both. That would be 5 modules: Question Bank, OCR, Parent Summary, Interview Bot, and the in-app Assessment & Insights.
+    d) Something else.
+A:c)
+
+A2. The .docx "Module 2: Assessment & Insights" is not in the .txt. It has students taking a test built from Module 1 questions, auto-scoring, LLM scoring of long answers against a rubric with teacher override, a radar chart, a difficulty split, a top-3 priority list, and links back to the student's own notes. Should I build any of it?
+    a) No. Only the .txt Parent Summary, which uses seeded synthetic marks. [My default]
+    b) Yes, a lightweight version: the student takes a test from accepted questions, and gets a topic-wise report with weak topics.
+    c) Yes, the full version as described in the .docx.
+A:b)
+
+A3. If A2 is (b) or (c), how does it relate to the Parent Summary?
+    Does the parent summary draw on in-app test results as well as seeded results, or only seeded data?
+A:no there are not related
+
+A4. Regenerate behaviour. The .docx says "up to 3 versions per upload, each with a different emphasis":
+    v1 balanced, v2 application/reasoning, v3 recall plus previously missed topics.
+    The .txt says unlimited refresh, each set different from all earlier sets, with a similarity check.
+    a) Unlimited refresh with dedupe (.txt). [My default]
+    b) Cap at 3 versions with the named emphases (.docx).
+    c) Both: the first 3 refreshes follow the named emphases, then plain refresh continues with dedupe.
+A: option b) for now
+
+A5. The .docx says a question set can be "sent to Module 2 as an assessment". The .txt has no assessments. If we drop Module 2, should this hand-off be dropped as well?
+A:follow .docx in this case
+
+A6. The .docx mentions a 6-week timeline and a "lean team", and lists the next steps as "share 5 to 10 sample notes, agree success metrics, approve the 6-week plan". The .txt has no timeline.
+    Is there a deadline for the first client demo? Should I plan around one?
+A:i need to complete this task in 2 days so divide tasks accordingly
+
+A7. Audience wording. The .docx says "schools, coaching institutes and edtech buyers". The .txt says school LMS vendors such as MyClassBoard and Nord Anglia. Is the pitch only to school LMS clients?
+A:don't focus on this for now
+
+
+------------------------------------------------------------------
+B. CURRICULUM, DEMO CONTENT AND SAMPLE DATA
+------------------------------------------------------------------
+
+B1. Which curriculum and grades should the demo cover (CBSE, ICSE, IB, Cambridge, or a Nord Anglia-style international mix)? Which grades (for example 6-10)?
+A:cbse cover only one standar for now 6th would be okay
+
+B2. Which subjects should be seeded? [My default: Science and Maths, plus English or Social Studies as a third.]
+    The .docx says "single-subject demos". Is one deep subject enough, or do you want several?
+A: you can take Science fornow
+
+B3. Do you have real sample documents I can use (5 to 10 typed and handwritten notes, per the .docx next steps)?
+    If not, I will generate synthetic PDFs and DOCX files, and create handwritten-style images with handwriting fonts.
+    Synthetic "handwriting" images are much easier to read than real ones, so accuracy numbers from them will look better than reality.
+    Is that acceptable, or can you supply a few real photos?
+A: yeah generate synthetic or if you can find in browser
+
+B4. How many students, classes and tests should the seed data have? [My default: 1 school, 2 classes, 15 students, 5 to 6 tests per subject.]
+    The .txt asks for 10-20 students and named personas (strong, average, weak). Do you want specific persona names or stories, or shall I invent them?
+A: default looks good andwe're only using science subject fornow
+
+B5. Should the demo school be branded? For example "MyClassBoard Demo School", or neutral naming? Any logo, colours or fonts to use?
+A: use whatever sound professional for POC
+
+B6. Is there a client-specific requirement (branding, data residency, curriculum criteria) that I should know about now? The .txt lists this as open question #7.
+A: no
+
+
+------------------------------------------------------------------
+C. AI PROVIDERS, KEYS AND BUDGET
+------------------------------------------------------------------
+
+C1. You said you will tell me the LLM/API key. Which provider and model do you plan to use? Anthropic Claude is my default.
+    Should I use a single model for everything (generation, vision OCR, interview), or a cheaper/faster model for the interview bot and a stronger one for question generation and OCR?
+A: groq free tier will be used for now
+
+C2. Is there a budget cap for the POC (per demo run, or in total)? This decides whether I add a cost-logging dashboard and whether I keep the number of retries low.
+A: now we try to build costless
+
+C3. Speech-to-text and text-to-speech.
+    The .txt says start with the browser Web Speech API (free, Chrome only) and keep a server-side provider behind an interface.
+    Do you want me to wire a real server-side STT/TTS provider now, or is the browser version enough for v1?
+    If server-side, which one? Options: OpenAI (Whisper + TTS), Deepgram, ElevenLabs, or Azure/Google speech. Do you already have an account with any of them?
+A: which one will be better and will be free of cost for POC perposes
+
+C4. Are you comfortable with student text and images being sent to third-party APIs (Anthropic, plus whichever speech provider), given that the data is synthetic?
+    Or should I add a mode with local or no-cloud models for privacy-sensitive demos?
+    The docx says "encrypted storage and no use of student data for model training". Do you want encryption at rest actually implemented (for example encrypted DB volume or file encryption), or documented as future work? [My default: document it, and keep everything synthetic.]
+A: groq will be used and yes it okay to send to third party
+
+C5. Will the demo be presented on a machine with a stable internet connection? The voice latency target of about 3 seconds depends on it, and everything depends on cloud APIs.
+    Do you want an offline or fallback mode (pre-recorded/cached responses) in case the network fails during a client demo?
+A: demo be presented on a machine with a stable internet connection
+
+
+------------------------------------------------------------------
+D. MODULE 1 - QUESTION BANK
+------------------------------------------------------------------
+
+D1. Export to a printable question paper with an answer key: PDF, DOCX, or both? [My default: DOCX and PDF.]
+    Any paper template (school header, marks per question, instructions section)?
+A:default for now
+
+D2. Can a teacher set marks per question or a section structure (Section A: MCQ, Section B: short answers, and so on) in the exported paper? Or is a flat list enough?
+A: yeah it should be editable
+
+D3. "Exactly N" questions: if the document is too thin, the brief says to say so rather than invent filler. Should the UI then offer "generate fewer" as a button, or just show a warning?
+A:what would be the best option in this
+
+D4. The docx says a question is "syllabus-aligned". Do you want an actual syllabus or curriculum tag (for example a CBSE chapter list) that questions are mapped to, or is subject/chapter/topic from the document enough?
+A:curriculum tag (for example a CBSE chapter list) you can use this if its a low effort task
+
+D5. How should the Subject -> Chapter -> Topic tree get created? Teacher picks or types chapter and topic at upload, or the AI proposes a topic map automatically (the docx says the system "builds a topic map")? [My default: AI proposes, teacher can edit.]
+A:default
+
+D6. What are the maximum document size and number of pages I should support? Are scanned (image-only) PDFs expected, or only text PDFs? [My default: 10-30 pages, text PDFs, and scanned PDFs routed through OCR.]
+A:default
+
+D7. Do teachers need Bloom's level shown to them everywhere, or just filterable in the bank? Should I keep "usable rate" tracking (accept / discard rate) as a visible teacher-facing metric or an internal one?
+A:what does this means explain in simple terms
+
+
+------------------------------------------------------------------
+E. MODULE 2 - PARENT SUMMARY
+------------------------------------------------------------------
+
+E1. Where do the marks come from in the demo: only the seed script/CSV, or should the teacher be able to upload a CSV of marks in the UI? [My default: seed script, plus a simple CSV upload if time allows.]
+A:default
+
+E2. Parent to child mapping: can one parent have multiple children? Should the demo have a parent with two children to show a switcher?
+A:for now assign 1 childern to parent
+
+E3. "Rank bands": what should these look like (for example Top 10%, Top 25%, Middle, Needs support)? Should class rank ever be shown to parents, or only bands? Schools can be sensitive about ranking. What is your preference?
+A:don't show them
+
+E4. Hindi (or another language) for the parent summary is "nice to have". Do you want it in the first pass? If yes, only Hindi, or others (Tamil, Telugu, Marathi, etc.)?
+    Note: the number-verification check needs care with translated numerals.
+A:only english
+
+E5. Teacher approval flow: does the teacher approve per student, or in bulk for the whole class? Should there be a "regenerate narrative" button? What happens when new test marks arrive after approval (mark the summary as stale and re-draft)?
+A:what would be the best way to handle this
+
+E6. Weak-topic threshold: configurable per teacher, per class, or globally? [My default: global default of 60%, overridable per class.]
+A:default
+
+E7. Should the parent see the interview reports from Module 4 by default, or only the teacher-approved summary that mentions them? Please confirm students' interview transcripts are not visible to parents. [My default: parents see summary only.]
+A:default
+
+
+------------------------------------------------------------------
+F. MODULE 3 - HANDWRITING OCR
+------------------------------------------------------------------
+
+F1. Confidence highlighting: Claude and other vision-language models do not return per-word confidence scores like traditional OCR engines do.
+    Options:
+    a) Ask the model to flag uncertain words itself (self-reported, less reliable). [My default]
+    b) Run a second pass or a second model and highlight words where the two disagree.
+    c) Use a cloud OCR service (Google Vision, Azure, Textract) for real word confidences, and use the LLM to fix structure.
+    Do you have a preference? Option (c) adds another vendor and another API key.
+A: no need to show score
+
+F2. How will OCR accuracy be measured? I would need ground-truth transcriptions. I can create them for synthetic samples. Would you like a small evaluation script and report (WER on neat vs messy samples), or is a manual spot check enough?
+A:what would be the best way for tis issue
+
+F3. Multi-page notes: should a note be one document made of several page images? [My default: yes, multi-page upload combined into one note.]
+A:default
+
+F4. Sharing rules: the .txt says a teacher can "optionally share a digitised note with a class". Confirm students can see shared notes read-only, and can generate practice quizzes from them? Should teachers be able to see students' notes?
+    [My default: no. Only notes that are explicitly shared.]
+A:default
+
+F5. Which Notes Library download formats are must-have: TXT, DOCX, PDF? [My default: all three.]
+A:docx
+
+F6. Should typed notes (not just handwritten) also be saveable into the Notes Library, so that the student practice quiz works from typed notes too?
+A:yes
+
+
+------------------------------------------------------------------
+G. MODULE 4 - INTERVIEW BOT
+------------------------------------------------------------------
+
+G1. Target age range for students (this drives vocabulary, tone, consent language and TTS voice choice). Are we talking about Grades 6-8, 9-12, or all of them?
+A:already asnwered
+
+G2. Voice consent: who consents, given that these are minors? Is a student-facing notice enough for the POC, or should a parent/teacher consent flag exist in the data model and gate voice mode?
+A: why there is  a consent neended
+
+G3. Should the bot's language be English only? Indian-English accents matter for STT. Should the bot's TTS voice have an Indian-English accent?
+A:english
+
+G4. Does the interview end at a fixed number of questions (5 to 10), a time limit, or either? Should the bot be allowed to end early if a student is clearly struggling or clearly excelling?
+A:yes 7 questions for 20 time limit
+
+G5. Should the bot ever reveal correct answers, for example in the end-of-interview report ("here is what a strong answer would have said"), or never?
+    The .txt says not mid-interview unless configured. Should this be a teacher-level setting?
+A:no
+
+G6. Grounding: should the interview only use the seeded subject/topic (LLM's own knowledge, restricted to topic), or be grounded in the uploaded document/note where one is chosen?
+    The .txt says both are supported, but without a note the bot will rely on the LLM's general knowledge, which conflicts with the "grounded only in uploaded content" spirit. Is that acceptable for the interview only?
+A:stay grounded to the upoaded doc
+
+G7. Scoring: "overall score band" - what bands do you want (for example Beginner / Developing / Proficient / Advanced)? Should the report include a numeric score too? Or is a band enough, to avoid an unfair-looking number on an AI judgement?
+A:what does this band will indicate
+
+G8. Voice hands-free (VAD): for Chrome, the free browser Web Speech API handles end-of-speech detection reasonably. For real VAD with a server-side STT provider, I would add a client-side VAD library (for example Silero VAD in the browser). Any objection to adding it?
+A:what does it is used for
+
+G9. Barge-in is a stretch goal. Should I plan the audio pipeline so it can be added later (cancelling TTS when speech is detected), or ignore it for now?
+A:yes
+
+G10. Will the demo be done in a quiet room with a good headset mic? If it will be a noisy conference room or speakerphone, echo (the bot hearing itself) is the most likely failure. I would default to push-to-talk in that case. Which setting should be the default?
+A:i don't need push to talk can the speaker voice get filtered out form the bg noise
+
+G11. Should the teacher see live or completed interviews across all students in their class? Any filters (by student, topic, date)? Can the teacher delete a transcript?
+A:no teacher can't delete the transcripts yes add these filters (by student, topic, date)
+
+
+------------------------------------------------------------------
+H. USERS, AUTH, ROLES
+------------------------------------------------------------------
+
+H1. Do you want the Admin role built (manage sample data, settings), or skipped? [My default: minimal Admin page with "Reset demo data" and settings like weak-topic threshold.]
+A:yes add admin panel too
+
+H2. Demo accounts: shall I seed one teacher, several students (strong / average / weak personas) and one or two parents, with simple known passwords shown on the login page ("Demo login" buttons)? Any objection to showing demo credentials on the login screen, given it is a POC?
+A:okay
+
+H3. Should the docx-style "learner" also exist for adults or self-learners (coaching institutes), or are all students school students tied to a class?
+A:i don't know about this
+
+
+------------------------------------------------------------------
+I. TECH, INFRA AND DELIVERY
+------------------------------------------------------------------
+
+I1. Tech stack: I plan to follow the .txt (Next.js + Tailwind + Recharts, FastAPI, PostgreSQL, Docker Compose). Any constraints from your side or the client's (must use Node, must use Azure/AWS, must be .NET-compatible)?
+A:follow the tech stack mentioned in the documnent
+
+I2. Where will this run on demo day: your laptop (Docker Desktop on Windows), a cloud VM, or a hosted URL the client can open? This affects whether I optimise for one-command Docker Compose, or also prepare a deployment (HTTPS is required for the microphone on any non-localhost URL).
+A:laptop
+
+I3. Is Docker Desktop installed on this machine? Also Python, Node.js and Git? If not, do you want me to work around it (SQLite, no Docker) for the earliest phase?
+A:yes, Docker Desktop installed on this machine
+
+I4. Where should the project code live: inside this MyClassBoard folder (for example a new subfolder like ai-learning-assistant/), or somewhere else? Do you want it in a git repo? Should I run git init here?
+A:inside folder only
+
+I5. Working style: after each phase (Foundation, then Module 1, and so on), do you want me to stop and summarise and wait for your OK, or continue straight through and report at the end? [My default: stop after each phase.]
+A:default
+
+I6. UI design: any design reference (Figma, screenshots, existing MyClassBoard look and feel)? Or should I make a clean, modern default design?
+A:clean morden ui
+
+I7. Language for the UI: English only?
+A:english
+
+
+------------------------------------------------------------------
+J. SUCCESS METRICS AND EVALUATION
+------------------------------------------------------------------
+
+J1. The metrics (80% usable questions, 90% OCR word accuracy, 100% number match in summaries, 4 of 5 weak-topic agreement, under 60s generation, under 3s voice response) need someone to judge quality. Who will act as the "teacher reviewer" for these tests? You, or someone else?
+    Should I build a small evaluation harness plus a one-page "Metrics" results page/report to show at the pitch?
+A: yes
+
+J2. Is a "Metrics dashboard" visible in the app useful for the pitch (for example accept rate, generation time, tokens and cost per action)? Or keep this to logs and the README?
+A: keep this to logs and the README
+
+J3. Time-savings claim: the brief says the stakeholder should "see clear time savings". Do you want an on-screen indicator, for example "This paper would take roughly 45 minutes manually; generated in 32 seconds"? If yes, do you have a baseline assumption for manual time per question?
+A:no
+
+
+------------------------------------------------------------------
+K. ANYTHING ELSE
+------------------------------------------------------------------
+
+K1. Anything in either document you disagree with, or want changed or removed?
+A:no
+
+K2. Is there anything else I should know about the client (Nord Anglia, MyClassBoard team members, their concerns, what they have already said no to) that would shape the demo?
+A:no
+
+K3. Priority if we run short on time: which module can be cut back first? [My default order, most to least expendable: voice polish, parent-summary Hindi, admin page, exports beyond PDF.]
+A:
+default

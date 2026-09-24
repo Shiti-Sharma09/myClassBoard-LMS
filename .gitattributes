@@ -1,0 +1,7 @@
+# Normalise line endings so Docker and shell scripts behave the same on Windows and Linux
+* text=auto eol=lf
+*.docx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary

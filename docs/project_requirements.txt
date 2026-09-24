@@ -1,0 +1,251 @@
+# AI Learning Assistant POC — Project Brief
+
+> Hand this file to Claude Code as the project context. Read it fully before writing any code. Start by producing a short implementation plan and listing any questions or assumptions, then build phase by phase (see "Build Order").
+
+---
+
+## 1. Background and Context
+
+- **Purpose:** This is a **standalone proof of concept that will be pitched to the client first**. It is a separate project with **no relation to, or dependency on, any existing LMS codebase for now**. It has its own database, its own users and its own sample data.
+- **Domain context:** The target market is school LMS platforms and school groups (for example MyClassBoard and Nord Anglia) that want AI-powered features that reduce manual work for teachers and give parents and students clearer insight.
+- **What the POC must show:** four AI capabilities that replace or reduce manual work in a typical LMS:
+  1. Generating question banks from uploaded documents, with a refreshable set each time
+  2. A plain-language performance summary for parents
+  3. Digitising handwritten notes (for both teachers and students)
+  4. An adaptive interview bot that can be used by text or **voice**
+- **Positioning note:** Some LMS vendors already ship AI features such as question paper generation, lesson plans, email drafting, remarks and translation. **Do not build those.** Focus on the four capabilities above, and make each one clearly better than a generic "generate questions" tool through grounding in the uploaded content, teacher review, real data-backed summaries, and adaptive conversation.
+- **Future:** Nothing in this brief requires integration with any LMS. Keep the backend cleanly API-based (good practice), but do not add integration code, adapters or LMS-specific data structures.
+
+## 2. Goal
+
+Build a working, demo-ready POC that a client stakeholder can use themselves to see how AI reduces manual work and improves insight, using realistic synthetic sample data.
+
+**Success looks like:** a stakeholder can log in as a teacher, student and parent, walk through all four modules end to end (including a spoken interview), and see clear time savings and useful insight, without any developer help.
+
+## 3. Users and Roles
+
+| Role | What they do |
+|---|---|
+| **Teacher** | Uploads documents, generates and curates questions, digitises handwritten notes, reviews and approves parent summaries, views interview transcripts and reports |
+| **Student** | Digitises their own handwritten notes, generates practice questions from their notes, takes the AI interview (text or voice), views own interview reports |
+| **Parent** | Views the approved AI summary of their child's performance |
+| **Admin** (optional) | Manages sample data and settings |
+
+Simple email/password auth with role-based access is enough for the POC. No SSO. Provide seeded demo accounts for each role.
+
+## 4. Scope: Four Modules
+
+### Module 1: AI Question Bank Generator (Teacher)
+
+**Purpose:** Replace manual question writing. A teacher uploads a document and gets a set of questions, and can refresh to get a new set.
+
+**Inputs**
+- Document upload: PDF, DOCX, TXT, or a digitised note from Module 3
+- Metadata: subject, class/grade, chapter, topic
+- Number of questions to generate (teacher-defined, e.g. 10)
+- Question types (multi-select): MCQ, short answer, long answer, fill in the blanks, true/false
+- Difficulty: easy / medium / hard / mixed
+
+**Behaviour**
+1. Extract text from the document, split it into topics/concepts.
+2. Generate **exactly N** questions grounded **only** in the uploaded content (no outside facts).
+3. Every question includes: question text, options (for MCQ), correct answer, a short explanation/rationale, type, difficulty, topic tag, and a **Bloom's taxonomy level** (Remember, Understand, Apply, Analyze, Evaluate, Create).
+4. **Refresh:** a "Generate new set" button produces a fresh set of N questions each time, **different from previously generated sets for that document** (pass earlier questions to the prompt and also run a similarity/duplicate check in code).
+5. Teacher can edit, accept, or discard each question. Accepted questions are saved to the **Question Bank**.
+6. The Question Bank is organised as **Subject → Chapter → Topic**, with counts per topic. Teachers can filter by type, difficulty and Bloom's level.
+7. Export a selected set as a printable question paper (PDF or DOCX) with an answer key.
+
+**Acceptance criteria**
+- Requested count is honoured every time (retry or top-up if the model returns fewer).
+- Refreshing yields a new set with no near-duplicates of earlier sets.
+- At least 80% of questions rated usable by a teacher in review (track with a simple accept/discard rate).
+- Generation of 10 questions from a 10-page document completes in under 60 seconds.
+
+### Module 2: AI Parent Summary
+
+**Purpose:** Give parents an easy-to-read overview of how their child is performing in tests and other assessments.
+
+**Inputs (synthetic data in the POC, loaded from a seed script or CSV)**
+- Student profile (name, class, section)
+- Test/assessment results per subject and topic (marks, max marks, date)
+- Attendance summary (optional)
+- Teacher remarks (optional)
+- Optionally, the student's AI interview reports from Module 4
+
+**Behaviour**
+1. All numbers (averages, trends, weakest and strongest topics, rank bands) are **computed in code**. The LLM only **narrates** the computed facts. It must never invent or recalculate figures.
+2. Output a parent-friendly summary containing:
+   - A short overall paragraph in plain, encouraging language
+   - Strengths and areas needing attention (by subject/topic)
+   - Trend across recent tests (improving / steady / declining)
+   - 2 to 3 practical suggestions for support at home
+3. Visuals: subject-wise bar chart, progress trend line, and weak-topic highlight (charts built from the computed data, not from the LLM).
+4. Teacher review step: the summary is a **draft** that a teacher can edit and approve before it becomes visible to the parent.
+5. Configurable weak-topic threshold (default: below 60%).
+6. English required. A language selector (e.g. Hindi) is a nice-to-have.
+
+**Acceptance criteria**
+- Every number in the narrative matches the underlying data.
+- Weak topics identified match a teacher's own judgement in at least 4 of 5 test cases.
+- Tone is clear, non-alarming and free of jargon.
+
+### Module 3: Handwritten Notes Digitisation (OCR) — Teachers and Students
+
+**Purpose:** Let **both teachers and students** turn handwritten notes into searchable, editable digital text.
+
+**Inputs:** JPG, PNG, or PDF of handwritten pages (phone camera photos included).
+
+**Behaviour**
+1. Pre-process images: deskew, crop, denoise, contrast/sharpen.
+2. Extract text using a handwriting-capable vision-language model (preferred), keeping headings and bullet structure where possible.
+3. **Review screen:** show the original image beside the extracted text, highlight low-confidence words, and let the user correct them.
+4. Save the corrected text to a personal **Notes Library** (title, subject, topic, date, original image, digital text). Notes can be searched, edited, and downloaded as TXT/DOCX/PDF.
+5. Role-specific follow-ups:
+   - **Teacher:** send a note to Module 1 to generate questions for the Question Bank. Optionally share a digitised note with a class.
+   - **Student:** generate a small **practice quiz** from their own note (for example 5 questions with instant feedback). This is for self-study only and is **not** saved to the teacher's Question Bank.
+6. Access rules: a student sees only their own notes (plus anything a teacher shares). A teacher sees their own notes and any notes shared with them.
+
+**Limits (state these in the UI):** English handwriting on ruled or plain paper. Diagrams are kept as images and are not interpreted.
+
+**Acceptance criteria**
+- At least 90% word accuracy on neat handwriting. Report messy-handwriting accuracy separately and honestly.
+- A corrected note can go from the Notes Library into question generation (teacher) or a practice quiz (student) without re-upload.
+- Students cannot see other students' notes.
+
+### Module 4: Adaptive AI Interview Bot — Text and Voice
+
+**Purpose:** A conversational bot that interviews a student on a subject and topic and adapts its questions to how the conversation goes. There is **no fixed question list**. The student can talk to it by **voice** (like a real oral interview) or type.
+
+**Inputs**
+- Subject and topic (optionally seeded from a digitised note or Question Bank topic)
+- Complexity: easy / medium / hard
+- Session length (number of questions, e.g. 5 to 10) or time limit
+- Mode: **Voice** or **Text** (switchable during the session)
+
+**Behaviour (both modes)**
+1. The bot opens with a question at the chosen complexity.
+2. After each student answer, the bot decides the next move: probe deeper, ask a follow-up on a gap, move to a related concept, or raise or lower difficulty based on answer quality.
+3. It stays strictly on the chosen subject and topic and politely redirects off-topic messages.
+4. It does not give away the correct answer mid-interview unless configured to.
+5. At the end it produces a **feedback report**: overall score band, concept-wise strengths and gaps, examples of good and weak answers, and suggested topics to revise.
+6. Full transcript and report are stored and viewable by the student and teacher.
+
+**Voice mode requirements**
+1. **Speech-to-text (STT):** capture the student's spoken answer from the browser microphone and transcribe it. Show the live or final transcript on screen so the student can see what was understood. Handle Indian-English accents reasonably well.
+2. **Text-to-speech (TTS):** the bot's questions are spoken aloud with a clear, friendly, age-appropriate voice, with the text also shown on screen.
+3. **Turn-taking:** support hands-free conversation using voice activity detection (auto-detect when the student stops speaking), with a push-to-talk fallback. Allow the student to interrupt or skip the bot's speech (barge-in is a stretch goal).
+4. **Controls:** mic on/off, replay the last question, repeat/skip, switch to text at any time, end session.
+5. **Latency target:** the bot should start responding within about 3 seconds of the student finishing speaking. Stream the LLM response and start TTS as early as practical.
+6. **Robustness:** handle mic permission denial, no speech detected, background noise, and low-confidence transcription (ask the student to repeat or confirm rather than guessing).
+7. **Provider abstraction:** STT and TTS sit behind interfaces in the AI service layer so providers can be swapped (see the tech stack). For the earliest phase, the browser's built-in speech APIs are acceptable, with a server-side provider as the higher-quality option.
+8. **Privacy for minors:** do **not** store raw audio by default. Store only the transcript. Show a clear consent notice before the first voice session. Make audio retention an explicit, off-by-default setting.
+9. **Voice is an interface layer, not a separate bot:** the same conversation engine and state drive both text and voice.
+
+**Design notes**
+- Maintain conversation state (asked concepts, running assessment per concept, current difficulty) explicitly in the backend, not only in the prompt.
+- Keep replies short and natural when spoken. Avoid long lists or markdown in the bot's voice output.
+- Age-appropriate, encouraging tone for school students.
+
+**Acceptance criteria**
+- Question sequence visibly differs between a strong and a weak student for the same topic.
+- Bot stays on topic in at least 95% of test conversations.
+- The end-of-interview report is consistent with the transcript.
+- A full 5-question voice interview can be completed hands-free on a modern desktop browser (Chrome), with text fallback available.
+- Median time from end of student speech to start of bot speech is within about 3 seconds on a normal connection.
+
+## 5. Cross-Cutting Requirements
+
+- **Shared AI service layer:** one internal module that wraps LLM, vision, STT and TTS calls, so all modules use the same client patterns, retry logic, timeouts, token/cost logging, and versioned prompt templates. Keep every provider swappable through an interface (default LLM and vision: Claude via the Anthropic API). Do not hardcode model names or provider keys. Read them from environment config.
+- **Structured output:** LLM responses for questions, summaries and reports must be requested as JSON and **validated against a schema** (e.g. Pydantic). Reject and retry on invalid output.
+- **Grounding and honesty:** questions come only from uploaded content. Summaries only restate computed data. If the source content is too thin for N questions, say so instead of inventing filler.
+- **Human in the loop:** every AI output that reaches a parent or enters the Question Bank is a draft that a teacher can edit and approve.
+- **Privacy and security:** treat student data as sensitive, especially because users are minors. Use synthetic sample data only in the POC. Keep API keys in environment variables. Do not log full student PII. Document exactly what data is sent to the LLM, STT and TTS providers. Student data must not be used for model training (state this in the README). Voice audio is not stored by default.
+- **API-first, standalone:** a clean REST API with OpenAPI/Swagger docs behind the web app. This is good engineering hygiene, not an integration requirement.
+- **Sample data:** provide a seed script with a small synthetic school: a few classes, subjects, chapters/topics, 10 to 20 students with multi-test score histories, sample documents (PDF/DOCX), and sample handwritten-note images. Include a few "persona" students (strong, average, weak) to make the interview bot and parent summary demos convincing.
+- **Demo readiness:** friendly loading, empty and error states everywhere. The app should never look broken in front of a client.
+
+## 6. Suggested Tech Stack (change if you have a good reason, and explain why)
+
+| Layer | Suggestion |
+|---|---|
+| Frontend | React with Next.js, Tailwind, a charting library (e.g. Recharts) |
+| Backend | Python with FastAPI (WebSockets or streaming endpoints for voice) |
+| LLM / Vision | Claude via Anthropic API (vision for OCR and for reading images) |
+| Speech-to-text | Start with the browser Web Speech API for speed. For better accuracy and reliability, use a server-side STT provider (e.g. a Whisper-based API, Deepgram, or a cloud speech service) behind the STT interface |
+| Text-to-speech | Start with browser speech synthesis. For a more natural voice, use a server-side TTS provider (e.g. ElevenLabs, OpenAI TTS, or a cloud speech service) behind the TTS interface |
+| Document parsing | PDF and DOCX text extractors (e.g. PyMuPDF, python-docx) |
+| Image pre-processing | OpenCV / Pillow |
+| Database | PostgreSQL (SQLite acceptable for the earliest phase) |
+| File storage | Local disk in the POC, behind a storage interface |
+| Packaging | Docker Compose for one-command local run |
+| Testing | pytest for backend, a few end-to-end smoke tests for the four flows |
+
+> Note: Claude handles the reasoning and conversation. Speech-to-text and text-to-speech need a separate speech provider. Pick one, keep it configurable, and document the choice and cost in `DECISIONS.md`.
+
+## 7. Suggested Data Model (starting point)
+
+`users` (role) · `schools/classes/sections` · `subjects` · `chapters` · `topics` · `students` · `documents` (uploaded files, extracted text) · `notes` (owner, owner_role, original image, corrected text, subject/topic, shared_with) · `question_sets` (generation batches per document or note) · `questions` (type, difficulty, bloom_level, topic, answer, explanation, status: draft/accepted/discarded) · `practice_quizzes` (student self-study, per note) · `assessments` · `assessment_results` (student, topic, marks) · `attendance` · `parent_summaries` (draft/approved, content, generated_at) · `interview_sessions` (mode: text/voice, subject, topic, complexity) · `interview_turns` (role, text, timestamp, stt_confidence, optional audio reference, off by default) · `interview_reports`
+
+## 8. Build Order
+
+1. **Foundation:** repo structure, Docker Compose, auth and roles, DB models, seed script, shared AI service layer (LLM, vision, STT, TTS interfaces), README skeleton.
+2. **Module 1** (Question Bank). Its data structures and topic tagging are reused by other modules.
+3. **Module 3** (OCR for teachers and students), because its Notes Library feeds Module 1 and the student practice quiz.
+4. **Module 2** (Parent Summary). Compute metrics in code first, add the narration layer second, add charts third.
+5. **Module 4, text first:** conversation state, adaptive logic, end report.
+6. **Module 4, voice layer:** add STT and TTS on top of the working text engine, then turn-taking, error handling and latency tuning.
+7. **Polish and demo:** end-to-end demo script for all three roles, seeded demo accounts, error and loading states, README with setup and demo walkthrough.
+
+After each phase, run it, test it, and summarise what works before moving on.
+
+## 9. Out of Scope for the POC
+
+Any integration with an existing LMS or ERP, SSO, payments, native mobile apps, proctored exams, multi-school administration, regional-language OCR, formula and diagram recognition, real-time multi-party voice or video, and rebuilding features that already exist in most LMS suites (lesson plans, email drafting, remarks writing, translation).
+
+## 10. Success Metrics (to demo)
+
+- 80% or more of generated questions rated usable by teachers
+- 10 questions from a 10-page document in under 60 seconds
+- OCR word accuracy of 90% or better on neat handwriting (messy handwriting reported separately)
+- Parent summary figures match source data 100% of the time
+- Interview bot adapts its questioning between strong and weak student personas
+- Voice interview: bot response starts within about 3 seconds of the student finishing speaking, and speech transcription is accurate enough to complete an interview without frequent repeats
+
+## 11. Risks and Mitigations
+
+| Risk | Mitigation |
+|---|---|
+| Questions drift from the source or contain errors | Ground on uploaded text only, schema validation, teacher review before saving |
+| LLM invents numbers in summaries | Compute metrics in code, LLM narrates only, check that every number in the output exists in the input |
+| Refresh returns near-duplicate questions | Pass prior questions to the prompt and run a similarity check in code |
+| Poor handwriting hurts OCR | Pre-processing, confidence highlighting, manual correction screen |
+| Interview bot goes off-topic or is too easy or hard | Explicit state tracking, topic guardrails, difficulty adaptation rules |
+| Voice latency feels slow or awkward | Stream LLM output, start TTS early, keep spoken replies short, provide push-to-talk and text fallback |
+| Speech recognition struggles with accents or noise | Show the transcript, ask to confirm low-confidence answers, allow correction or switching to text |
+| Voice data of minors is sensitive | No audio stored by default, consent notice, transcripts only, documented data flow |
+| Browser or mic compatibility issues during a live demo | Target Chrome desktop, test mic permissions early, always keep text mode available |
+| Student data privacy concerns | Synthetic data only, no PII in logs, clear data-flow documentation |
+
+## 12. Open Questions and Assumptions (confirm or flag before building)
+
+1. Which curricula and grade levels should the demo data cover (for example CBSE, IB, Cambridge)?
+2. Preferred LLM provider and budget limits. Claude via the Anthropic API is assumed.
+3. Which STT/TTS provider should be used, and is there a budget for it? Browser speech APIs are assumed for the earliest phase.
+4. Target student age range for the voice interview (this affects tone, consent and privacy handling)?
+5. Should parent summaries support Hindi or other languages in the POC?
+6. Should the interview bot's questions be seeded from a digitised note or Question Bank topic, or work only from subject and topic? Both are supported in this brief.
+7. Any client-specific requirements for the pitch (branding, data residency, curriculum criteria)?
+
+## 13. Working Instructions for Claude Code
+
+- Begin with a concise plan and a list of questions or assumptions. Do not start coding blindly.
+- Keep code modular, typed, and documented. Prefer clarity over cleverness.
+- Never hardcode secrets or model names. Provide a `.env.example`.
+- Write prompts as versioned template files, not inline strings.
+- Add tests for the deterministic parts (metric computation, dedupe check, schema validation, interview state transitions, role-based access to notes).
+- Keep a running `README.md` (setup, env vars, seed data, demo walkthrough) and a `DECISIONS.md` for choices made and why (including the STT/TTS provider choice).
+- When something in this brief is ambiguous, choose the simplest option that serves the demo, and record the choice in `DECISIONS.md`.
+- Optimise for a smooth live demo: seeded accounts, realistic sample data, and no dead ends.
+
+
+i'll let you know what API key I will use for LLm etc
