@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app.ai import AIError
 from app.config import get_settings
 from app.db import engine
-from app.routers import auth
+from app.routers import auth, catalog, notes
 from app.seed.seed import ensure_seeded
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -38,6 +38,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],  # lets the browser read the download filename
 )
 
 
@@ -55,3 +56,5 @@ def health() -> dict:
 
 
 app.include_router(auth.router)
+app.include_router(catalog.router)
+app.include_router(notes.router)
