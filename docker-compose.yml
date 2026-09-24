@@ -1,0 +1,47 @@
+name: myclassboard-lms
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lms
+      POSTGRES_PASSWORD: lms
+      POSTGRES_DB: lms
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms -d lms"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://lms:lms@db:5432/lms
+      UPLOAD_DIR: /app/uploads
+      CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-8010}:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Baked into the browser bundle: the browser calls the backend directly.
+        NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-8010}
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+# Named volumes live inside Docker, not in the OneDrive-synced project folder.
+volumes:
+  pgdata:
+  uploads:
