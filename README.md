@@ -10,7 +10,7 @@ A standalone proof of concept showing how AI can reduce manual work for teachers
 | 4 | Parent Summary | Teacher, Parent | Plain-language performance summary, teacher-approved, numbers computed in code |
 | 5 | Interview Bot | Student, Teacher | Adaptive 7-question oral or typed interview with a feedback report |
 
-> **Status:** under active development. See [docs/PLAN.md](docs/PLAN.md) for the block-by-block plan and progress.
+> **Status:** under active development. See [docs/PLAN.md](docs/PLAN.md) for the block-by-block plan, and the Progress table below.
 
 ## Documentation
 
@@ -19,7 +19,7 @@ A standalone proof of concept showing how AI can reduce manual work for teachers
 | [docs/PLAN.md](docs/PLAN.md) | Execution plan, tasks, check-ins, cut list |
 | [docs/SUGGESTIONS.md](docs/SUGGESTIONS.md) | Approach and reasoning behind the design |
 | [docs/project_requirements.txt](docs/project_requirements.txt) | Original project brief |
-| `DECISIONS.md` | Choices made along the way and why (added as we build) |
+| [DECISIONS.md](DECISIONS.md) | Choices made along the way and why |
 | `METRICS.md` | Measured results against the success metrics (added in the final block) |
 
 ## Tech stack
@@ -48,12 +48,59 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Then open:
+The first start builds the images (a few minutes) and seeds the demo school automatically. Then open:
 
 - App: http://localhost:3000
-- API docs (Swagger): http://localhost:8000/docs
+- API docs (Swagger): http://localhost:8010/docs
 
-Setup steps for each module are added here as the modules land.
+Ports are set by `FRONTEND_PORT` and `BACKEND_PORT` in `.env`. If a port is already taken on your machine, change it there and re-run `docker compose up --build`.
+
+To stop: `docker compose down`. To wipe the database and start fresh: `docker compose down -v`.
+
+## Demo accounts
+
+Every demo account uses the password `demo1234`. The login page has one-click buttons for these:
+
+| Role | Email | Notes |
+|---|---|---|
+| Teacher | `teacher@demo.school` | Sees both classes |
+| Admin | `admin@demo.school` | |
+| Student | `aarav@demo.school` | Strong student |
+| Student | `diya@demo.school` | Average student |
+| Student | `rohan@demo.school` | Weak student |
+| Parent | `parent.aarav@demo.school` | Also `parent.diya@…`, `parent.rohan@…` |
+
+All 15 students follow the pattern `<firstname>@demo.school`, and their parents `parent.<firstname>@demo.school`. Personas: strong, average, weak, improving, declining, and "gap" (strong overall but weak in one chapter).
+
+## Development
+
+```bash
+# Backend tests (fast, no Docker needed): use a virtualenv OUTSIDE any cloud-synced folder
+python -m venv ~/.venvs/lms
+~/.venvs/lms/bin/pip install -r backend/requirements.txt      # Windows: ~/.venvs/lms/Scripts/pip
+cd backend && ~/.venvs/lms/bin/python -m pytest
+
+# Live check that Groq works with your key (main, fast and vision models)
+cd backend && ~/.venvs/lms/bin/python -m scripts.ai_check
+
+# Frontend checks
+cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
+```
+
+**Working inside OneDrive or Dropbox?** Syncing `node_modules` is slow and can lock files. Keep the virtualenv outside the folder and link `frontend/node_modules` and `frontend/.next` to a folder outside it (a Windows junction: `New-Item -ItemType Junction`). Turbopack rejects such links, so use `npm run dev:local` and `npm run build:local` (webpack) for local work. Docker builds are unaffected. Details in [DECISIONS.md](DECISIONS.md).
+
+## Progress
+
+| Block | Status |
+|---|---|
+| 1. Foundation (auth, seed data, AI layer, app shell, Docker) | Done |
+| 2. Sample content | Next |
+| 3. OCR + Notes Library | Planned |
+| 4. Question Bank | Planned |
+| 5. Parent Summary | Planned |
+| 6. Assessment (lite) | Planned |
+| 7-8. Interview Bot (text, then voice) | Planned |
+| 9. Admin, metrics, polish | Planned |
 
 ## Privacy and data
 
