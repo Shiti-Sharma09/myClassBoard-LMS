@@ -37,3 +37,6 @@ desktop.ini
 tmp/
 *.log
 coverage/
+
+# Downloaded handwriting fonts for the sample-data generator
+sample_data/.fonts/

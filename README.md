@@ -94,8 +94,8 @@ cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
 | Block | Status |
 |---|---|
 | 1. Foundation (auth, seed data, AI layer, app shell, Docker) | Done |
-| 2. Sample content | Next |
-| 3. OCR + Notes Library | Planned |
+| 2. Sample content (typed notes, handwriting images, ground truth) | Done |
+| 3. OCR + Notes Library | Next |
 | 4. Question Bank | Planned |
 | 5. Parent Summary | Planned |
 | 6. Assessment (lite) | Planned |
