@@ -131,7 +131,7 @@ class AIService:
                 if not exc.retryable or attempt == max_tries - 1:
                     raise
                 delay = exc.retry_after if exc.retry_after is not None else 2**attempt
-                self._sleep(min(delay, 20))
+                self._sleep(min(delay, 30))
         raise AIError("The AI service is unavailable.")  # unreachable
 
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 import enum
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -102,6 +102,62 @@ class ScoreRecord(Base):
     test_date: Mapped[date] = mapped_column(Date)
     marks: Mapped[float] = mapped_column(Float)
     max_marks: Mapped[float] = mapped_column(Float)
+
+
+class Note(Base):
+    """Any text source: handwritten (OCR), typed, or an uploaded document.
+
+    OCR notes start as status="draft" (so the review screen can show the original
+    pages beside the text) and become "saved" once the user confirms them.
+    """
+
+    __tablename__ = "notes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    subject: Mapped[str] = mapped_column(String(60), default="Science")
+    chapter_id: Mapped[int | None] = mapped_column(ForeignKey("chapters.id"))
+    topic: Mapped[str | None] = mapped_column(String(200))
+    source_type: Mapped[str] = mapped_column(String(10))  # ocr | typed | upload
+    status: Mapped[str] = mapped_column(String(10), default="saved")  # draft | saved
+    text: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+    owner: Mapped[User] = relationship()
+    chapter: Mapped[Chapter | None] = relationship()
+    pages: Mapped[list[NotePage]] = relationship(
+        back_populates="note", order_by="NotePage.page_number", cascade="all, delete-orphan"
+    )
+    shares: Mapped[list[NoteShare]] = relationship(back_populates="note", cascade="all, delete-orphan")
+
+
+class NotePage(Base):
+    """One original page image of a handwritten note."""
+
+    __tablename__ = "note_pages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"), index=True)
+    page_number: Mapped[int] = mapped_column(Integer)
+    image_path: Mapped[str] = mapped_column(String(300))  # relative to the storage root
+
+    note: Mapped[Note] = relationship(back_populates="pages")
+
+
+class NoteShare(Base):
+    """A teacher's note shared read-only with every student in a class."""
+
+    __tablename__ = "note_shares"
+    __table_args__ = (UniqueConstraint("note_id", "class_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"), index=True)
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"), index=True)
+
+    note: Mapped[Note] = relationship(back_populates="shares")
+    school_class: Mapped[SchoolClass] = relationship()
 
 
 class Setting(Base):
