@@ -83,8 +83,14 @@ cd backend && ~/.venvs/lms/bin/python -m pytest
 # Live check that Groq works with your key (main, fast and vision models)
 cd backend && ~/.venvs/lms/bin/python -m scripts.ai_check
 
+# Score handwriting OCR against the ground-truth samples (real AI calls)
+cd backend && ~/.venvs/lms/bin/python -m scripts.eval_ocr
+
 # Frontend checks
 cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
+
+# Browser walkthrough of the Notes flow (needs the Docker stack running and a fresh database)
+cd e2e && npm install && npx playwright install chromium && npm run notes
 ```
 
 **Working inside OneDrive or Dropbox?** Syncing `node_modules` is slow and can lock files. Keep the virtualenv outside the folder and link `frontend/node_modules` and `frontend/.next` to a folder outside it (a Windows junction: `New-Item -ItemType Junction`). Turbopack rejects such links, so use `npm run dev:local` and `npm run build:local` (webpack) for local work. Docker builds are unaffected. Details in [DECISIONS.md](DECISIONS.md).
@@ -95,8 +101,8 @@ cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
 |---|---|
 | 1. Foundation (auth, seed data, AI layer, app shell, Docker) | Done |
 | 2. Sample content (typed notes, handwriting images, ground truth) | Done |
-| 3. OCR + Notes Library | Next |
-| 4. Question Bank | Planned |
+| 3. OCR + Notes Library (handwriting to text, review screen, sharing, practice quiz) | Done |
+| 4. Question Bank | Next |
 | 5. Parent Summary | Planned |
 | 6. Assessment (lite) | Planned |
 | 7-8. Interview Bot (text, then voice) | Planned |

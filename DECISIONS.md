@@ -37,3 +37,24 @@ A running log of choices made while building, and why. Newest at the bottom of e
 - **Docker ports:** the backend publishes on **8010**, not 8000, because another project on this machine already uses 8000. Both ports are set in `.env`.
 - **OneDrive:** the project sits in a OneDrive-synced folder. Python's virtualenv lives in `~/.venvs/lms`, and the frontend's `node_modules` and `.next` are junctions to `~/.lms-cache/frontend`, so OneDrive never syncs thousands of tiny files. Docker volumes hold Postgres data and uploads.
 - **Turbopack refuses a `node_modules` junction** that points outside the project, so local commands use webpack (`npm run dev:local`, `npm run build:local`). Docker builds use a real `node_modules` and the default Turbopack build.
+
+## Free-tier limits that shape the design (measured)
+
+- **Every Groq model on this key is capped at 8,000 tokens per minute** (and 1,000 requests). Each model has its own bucket. This is why long documents are never sent whole, why OCR is sequential, and why the AI layer waits out `429` responses using the `Retry-After` header (up to 30 s).
+- **A handwriting page costs about 2,100 tokens regardless of image size**, so about three pages a minute. Uploads are capped at 5 pages, and images are shrunk to 1400 px only to keep uploads small.
+- **Interview turns and practice quizzes use the fast model (`gpt-oss-20b`)** so they don't compete with question generation for the same bucket.
+- Blocking AI calls run in a thread pool, so one person's OCR never freezes the server for everyone else.
+
+## Handwriting OCR: what we measured, honestly
+
+- On the synthetic samples the vision model scored **100% word accuracy** (neat and messy). That is optimistic: the pages are rendered from fonts. See `sample_data/README.md`. Real handwriting numbers need real photos.
+- **The model does not reliably flag its own mistakes.** On a heavily blurred page it wrote "moves up" for "rises up" and marked nothing as uncertain. On clean pages it flags nothing because it reads everything correctly. So the yellow "words to check" highlighting works (tested in a browser) but will rarely fire. The review screen is the real safety net, and its wording says so.
+- Options if reliable flagging is needed: (1) read each page twice with different preprocessing and highlight words where the readings disagree (doubles token cost, so about 1.5 pages a minute on this tier), or (2) a cloud OCR service that returns true per-word confidence (another vendor and key). Not done: it isn't worth the cost or complexity for the POC unless real-handwriting tests show a need.
+- Vision calls use temperature 0 so the same page gives the same text.
+
+## Notes Library
+
+- **One `notes` table for everything** (handwritten, typed, uploaded). OCR results start as a *draft* so the review screen can show the original pages; they enter the library only when the user saves.
+- **Access rules live in one function** (`services/notes_access.py`). A note you may not see is reported as *not found* (404), never *forbidden*, so guessing ids reveals nothing. A test proves the privacy tests fail when the rule is deliberately broken.
+- **Students' practice quizzes are ephemeral** and never touch the Question Bank. The teacher-reviewed generator is a separate feature.
+- Page images are fetched with the login token and shown from a blob URL, because a plain `<img>` can't send an Authorization header.
