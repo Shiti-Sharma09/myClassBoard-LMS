@@ -268,3 +268,40 @@ class ParentSummary(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     student: Mapped[Student] = relationship()
+
+
+class Attempt(Base):
+    """A student's one submitted go at an assessment. Scores are final once stored."""
+
+    __tablename__ = "attempts"
+    __table_args__ = (UniqueConstraint("assessment_id", "student_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    assessment_id: Mapped[int] = mapped_column(ForeignKey("assessments.id"), index=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), index=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # True when written answers were marked by keyword match because the AI was unavailable.
+    ai_fallback: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    assessment: Mapped[Assessment] = relationship()
+    student: Mapped[Student] = relationship()
+    answers: Mapped[list[AttemptAnswer]] = relationship(
+        back_populates="attempt", order_by="AttemptAnswer.position", cascade="all, delete-orphan"
+    )
+
+
+class AttemptAnswer(Base):
+    __tablename__ = "attempt_answers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("attempts.id"), index=True)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    position: Mapped[int] = mapped_column(Integer)
+    answer: Mapped[str] = mapped_column(Text, default="")
+    marks_awarded: Mapped[float] = mapped_column(Float, default=0.0)
+    max_marks: Mapped[float] = mapped_column(Float, default=1.0)
+    feedback: Mapped[str | None] = mapped_column(Text)
+    scored_by: Mapped[str] = mapped_column(String(10), default="code")  # code | ai | keyword
+
+    attempt: Mapped[Attempt] = relationship(back_populates="answers")
+    question: Mapped[Question] = relationship()

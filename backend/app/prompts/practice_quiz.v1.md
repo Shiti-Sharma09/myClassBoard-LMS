@@ -8,7 +8,7 @@ Rules:
 - "explanation" is one short, encouraging sentence that says why the answer is right, using the notes.
 - Do not copy a whole sentence from the notes as the question. Test understanding.
 === USER ===
-Write {{ count }} questions from these notes.
+Write {{ count }} questions from these notes.{% if topic %} Ask only about this topic: "{{ topic }}". The student found it hard, so keep the questions gentle and clear.{% endif %}
 
 NOTES:
 """
