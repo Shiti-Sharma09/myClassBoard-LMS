@@ -10,15 +10,15 @@ from sqlalchemy.orm import Session
 from app.ai import AIService, get_ai_service
 from app.db import get_db
 from app.deps import require_role
-from app.models import Chapter, ParentSummary, ScoreRecord, Setting, Student, Topic, User, utcnow
+from app.models import Chapter, ParentSummary, ScoreRecord, Student, Topic, User, utcnow
 from app.services.metrics import Record, compute_facts
+from app.services.settings import weak_threshold
 from app.services.summary import Narrative, narrate, problems
 
 router = APIRouter(prefix="/api", tags=["summaries"])
 
 teacher_only = require_role("teacher")
 parent_only = require_role("parent")
-DEFAULT_THRESHOLD = 60
 
 
 # ------------------------------------------------------------------ schemas
@@ -69,14 +69,6 @@ class ChildSummary(BaseModel):
 # ------------------------------------------------------------------ helpers
 
 
-def _threshold(db: Session) -> int:
-    row = db.get(Setting, "weak_topic_threshold")
-    try:
-        return max(1, min(100, int(row.value))) if row else DEFAULT_THRESHOLD
-    except ValueError:
-        return DEFAULT_THRESHOLD
-
-
 def _records(db: Session, student_id: int) -> list[Record]:
     rows = db.execute(
         select(ScoreRecord, Topic.name, Chapter.title)
@@ -120,7 +112,7 @@ def _detail(student: Student, summary: ParentSummary | None, live_facts: dict | 
 
 @router.get("/summaries", response_model=list[SummaryRow])
 def list_summaries(class_id: int | None = None, user: User = Depends(teacher_only), db: Session = Depends(get_db)) -> list[SummaryRow]:
-    threshold = _threshold(db)
+    threshold = weak_threshold(db)
     query = select(Student).order_by(Student.class_id, Student.id)
     if class_id is not None:
         query = query.where(Student.class_id == class_id)
@@ -148,7 +140,7 @@ def list_summaries(class_id: int | None = None, user: User = Depends(teacher_onl
 @router.get("/summaries/{student_id}", response_model=SummaryDetail)
 def get_summary(student_id: int, user: User = Depends(teacher_only), db: Session = Depends(get_db)) -> SummaryDetail:
     student = _student(db, student_id)
-    return _detail(student, _summary(db, student_id), compute_facts(_records(db, student_id), _threshold(db)))
+    return _detail(student, _summary(db, student_id), compute_facts(_records(db, student_id), weak_threshold(db)))
 
 
 @router.post("/summaries/{student_id}/generate", response_model=SummaryDetail)
@@ -160,7 +152,7 @@ def generate_summary(
 ) -> SummaryDetail:
     """Make (or remake) the draft for one student. Always leaves it as a draft for the teacher to approve."""
     student = _student(db, student_id)
-    facts = compute_facts(_records(db, student_id), _threshold(db))
+    facts = compute_facts(_records(db, student_id), weak_threshold(db))
     if facts is None:
         raise HTTPException(422, f"{student.user.name} has no marks yet, so there is nothing to summarise.")
     result = narrate(ai, facts, student.user.name)

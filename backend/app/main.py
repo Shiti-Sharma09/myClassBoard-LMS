@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app.ai import AIError
 from app.config import get_settings
 from app.db import engine
-from app.routers import auth, catalog, notes, questions, summaries
+from app.routers import auth, catalog, notes, questions, summaries, tests
 from app.seed.seed import ensure_seeded
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -60,3 +60,4 @@ app.include_router(catalog.router)
 app.include_router(notes.router)
 app.include_router(questions.router)
 app.include_router(summaries.router)
+app.include_router(tests.router)

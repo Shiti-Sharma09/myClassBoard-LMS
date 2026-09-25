@@ -77,6 +77,10 @@ class ShareIn(BaseModel):
     class_ids: list[int]
 
 
+class PracticeIn(BaseModel):
+    topic: str | None = Field(default=None, max_length=200)  # practise one weak topic instead of the whole note
+
+
 class PracticeOut(BaseModel):
     questions: list[PracticeQuestion]
 
@@ -359,6 +363,7 @@ def set_shares(
 @router.post("/{note_id}/practice", response_model=PracticeOut)
 def practice_quiz(
     note_id: int,
+    body: PracticeIn | None = None,
     user: User = Depends(require_role("student")),
     db: Session = Depends(get_db),
     ai: AIService = Depends(get_ai_service),
@@ -367,4 +372,4 @@ def practice_quiz(
     note = get_note_or_404(db, user, note_id)
     if len(note.text.strip()) < MIN_NOTE_CHARS:
         raise _unprocessable("This note is too short to make a quiz from. Add a little more to it first.")
-    return PracticeOut(questions=make_quiz(ai, note.text, count=5))
+    return PracticeOut(questions=make_quiz(ai, note.text, count=5, topic=(body.topic.strip() if body and body.topic else None)))
