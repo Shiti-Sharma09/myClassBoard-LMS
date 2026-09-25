@@ -13,7 +13,7 @@ export const NAV: Record<Role, NavItem[]> = {
   teacher: [
     { label: "Notes & OCR", href: "/teacher/notes", description: "Digitise handwritten notes and keep a notes library.", ready: true },
     { label: "Question Bank", href: "/teacher/questions", description: "Generate questions from notes and export a paper.", ready: true },
-    { label: "Parent Summaries", href: "/teacher/summaries", description: "Review and approve AI progress summaries.", ready: false },
+    { label: "Parent Summaries", href: "/teacher/summaries", description: "Review and approve AI progress summaries.", ready: true },
     { label: "Interview Reports", href: "/teacher/interviews", description: "See how students did in AI interviews.", ready: false },
   ],
   student: [
@@ -22,7 +22,7 @@ export const NAV: Record<Role, NavItem[]> = {
     { label: "AI Interview", href: "/student/interview", description: "Practise a spoken or typed interview on your notes.", ready: false },
   ],
   parent: [
-    { label: "Progress Summary", href: "/parent/summary", description: "A plain-language view of how your child is doing.", ready: false },
+    { label: "Progress Summary", href: "/parent/summary", description: "A plain-language view of how your child is doing.", ready: true },
   ],
   admin: [
     { label: "Demo Data", href: "/admin/data", description: "Reset the demo school to a fresh state.", ready: false },

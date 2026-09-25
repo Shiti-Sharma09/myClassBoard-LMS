@@ -245,3 +245,26 @@ class Setting(Base):
 
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
     value: Mapped[str] = mapped_column(String(500))
+
+
+class ParentSummary(Base):
+    """One progress summary per student. Parents only ever see it once a teacher has approved it.
+
+    `facts` is a snapshot of the computed numbers at generation time, so the charts and the words a parent
+    sees always agree, even if marks change later. Any change to the text puts the summary back to "draft".
+    """
+
+    __tablename__ = "parent_summaries"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id"), unique=True)
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft | approved
+    facts: Mapped[dict] = mapped_column(JSON)
+    narrative: Mapped[dict] = mapped_column(JSON)
+    source: Mapped[str] = mapped_column(String(20), default="ai")  # ai | template
+    verify_failures: Mapped[int] = mapped_column(Integer, default=0)
+    edited: Mapped[bool] = mapped_column(Boolean, default=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    student: Mapped[Student] = relationship()

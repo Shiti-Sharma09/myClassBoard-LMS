@@ -71,3 +71,14 @@ A running log of choices made while building, and why. Newest at the bottom of e
 - **PDF is the browser's Print / Save as PDF** with a print stylesheet that shows only the paper, so there is no PDF library to maintain. DOCX is generated on the server.
 - **Assign as test** creates an assessment for one class; the student-facing test screens arrive with Block 6.
 
+## Parent Summary
+
+- **Code computes, the AI narrates.** `services/metrics.py` produces every figure (whole-number percentages, per-test and per-chapter scores, trend, weak topics below the threshold). The model is given those facts and told to restate them.
+- **Every summary is checked before a teacher sees it.** All numbers in the text must exist in the facts, and ranking or alarming words ("rank", "topper", "classmates", "failing", "behind"...) are refused. A failed check triggers one retry that says what was wrong; if that also fails, or the AI is unavailable, a plain template written by code is used. So a wrong figure can never reach the screen.
+- **Teacher edits get the same check.** A typed figure that does not match the marks is refused with a message.
+- **Measured on real Groq (15 seeded students):** 0 wrong numbers shown, and 14 of 15 written by the model. The checks did step in: typical rejections were invented benchmarks ("above 80%", "in the high 80s"), fixed mainly through the prompt and the retry message. The fallback wording is marked "Basic wording" in the teacher list.
+- **Known limit:** the number check reads digits only. A number written as a word ("six tests") is not checked; the prompt asks for digits and the facts are always shown next to the text.
+- **Approval rules:** a parent sees only their own child's approved summary. Any change (edit or regenerate) puts it back to draft, so the parent never sees text the teacher has not signed off. The parent's charts use the numbers stored with the approved summary, so words and charts always agree.
+- **One summary per student, one request per student when generating for a class.** The UI loops and shows progress, so one slow AI call never blocks the rest and the free-tier limit is respected (about 11 s per student).
+- **Not built (out of scope for the POC):** class-level threshold overrides. The single threshold from Settings applies (Admin panel arrives in Block 9).
+
