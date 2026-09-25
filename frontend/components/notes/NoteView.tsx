@@ -139,10 +139,10 @@ export function NoteView({ role, noteId }: { role: LibraryRole; noteId: number }
               <Button>Practice quiz</Button>
             </Link>
           )}
-          {role === "teacher" && (
-            <Button variant="secondary" disabled title="Coming with the Question Bank">
-              Generate questions (soon)
-            </Button>
+          {role === "teacher" && note.can_edit && note.status === "saved" && (
+            <Link href={`${base}/${noteId}/questions`}>
+              <Button>Generate questions</Button>
+            </Link>
           )}
           <Button variant="secondary" onClick={download} loading={busy === "download"}>
             Download DOCX

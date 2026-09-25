@@ -58,3 +58,16 @@ A running log of choices made while building, and why. Newest at the bottom of e
 - **Access rules live in one function** (`services/notes_access.py`). A note you may not see is reported as *not found* (404), never *forbidden*, so guessing ids reveals nothing. A test proves the privacy tests fail when the rule is deliberately broken.
 - **Students' practice quizzes are ephemeral** and never touch the Question Bank. The teacher-reviewed generator is a separate feature.
 - Page images are fetched with the login token and shown from a blob URL, because a plain `<img>` can't send an Authorization header.
+
+## Question Bank
+
+- **Up to 3 versions per note** (balanced, application/thinking, recall/understanding). Each version reads a different third of a long note and is shown the earlier questions to avoid, so versions differ in substance and not only in wording.
+- **Every question is validated in code** before a teacher sees it: type-specific shape (4 distinct MCQ options, a real blank, True/False answer), and the answer must appear in the note text. Ungrounded questions are dropped.
+- **Honest shortfall:** if a note cannot support N good questions, the teacher sees the smaller number and a plain explanation. There is no filler.
+- **Duplicate detection is plain word overlap, no embeddings.** Two measures must agree (share of the smaller question's words found in the other, and Jaccard) and at least 3 meaningful words must be shared. Tuned on real regenerations: earlier settings flagged distinct short questions ("Copper is strongly attracted..." vs "Which of these materials is attracted...") and are pinned by regression tests. It will miss a truly different wording of the same fact.
+- **Known limit:** version 3 (recall) can run out of distinct facts on a short note and returns fewer questions with a message.
+- **Speed:** 10 questions from a 10-page note take about 3 to 6 seconds (target was under 60).
+- **Only accepted questions reach the bank, papers and tests.** Editing is validated server-side (an edit that would break a question is refused).
+- **PDF is the browser's Print / Save as PDF** with a print stylesheet that shows only the paper, so there is no PDF library to maintain. DOCX is generated on the server.
+- **Assign as test** creates an assessment for one class; the student-facing test screens arrive with Block 6.
+

@@ -91,6 +91,7 @@ cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
 
 # Browser walkthrough of the Notes flow (needs the Docker stack running and a fresh database)
 cd e2e && npm install && npx playwright install chromium && npm run notes
+npm run questions   # teacher: generate, review, bank, paper, assign as test
 ```
 
 **Working inside OneDrive or Dropbox?** Syncing `node_modules` is slow and can lock files. Keep the virtualenv outside the folder and link `frontend/node_modules` and `frontend/.next` to a folder outside it (a Windows junction: `New-Item -ItemType Junction`). Turbopack rejects such links, so use `npm run dev:local` and `npm run build:local` (webpack) for local work. Docker builds are unaffected. Details in [DECISIONS.md](DECISIONS.md).
@@ -102,7 +103,8 @@ cd e2e && npm install && npx playwright install chromium && npm run notes
 | 1. Foundation (auth, seed data, AI layer, app shell, Docker) | Done |
 | 2. Sample content (typed notes, handwriting images, ground truth) | Done |
 | 3. OCR + Notes Library (handwriting to text, review screen, sharing, practice quiz) | Done |
-| 4. Question Bank | Next |
+| 4. Question Bank (generate up to 3 versions, review, bank, DOCX/PDF paper, assign as test) | Done |
+| 5. Parent Summary | Next |
 | 5. Parent Summary | Planned |
 | 6. Assessment (lite) | Planned |
 | 7-8. Interview Bot (text, then voice) | Planned |
