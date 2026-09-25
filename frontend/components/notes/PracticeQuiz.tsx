@@ -94,10 +94,10 @@ function Quiz({ questions, noteHref, onAgain }: { questions: PracticeQuestion[];
   );
 }
 
-export function PracticeQuiz({ noteId, noteHref }: { noteId: number; noteHref: string }) {
+export function PracticeQuiz({ noteId, noteHref, topic }: { noteId: number; noteHref: string; topic?: string }) {
   const [round, setRound] = useState(0);
-  const { data, error, loading, reload } = useLoad(`practice:${noteId}:${round}`, () =>
-    api<{ questions: PracticeQuestion[] }>(`/api/notes/${noteId}/practice`, { method: "POST" }),
+  const { data, error, loading, reload } = useLoad(`practice:${noteId}:${topic ?? ""}:${round}`, () =>
+    api<{ questions: PracticeQuestion[] }>(`/api/notes/${noteId}/practice`, { method: "POST", json: topic ? { topic } : undefined }),
   );
 
   return (
@@ -107,7 +107,9 @@ export function PracticeQuiz({ noteId, noteHref }: { noteId: number; noteHref: s
           ← Back to note
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">Practice quiz</h1>
-        <p className="mt-1 text-sm text-slate-500">Questions made from your note, just for practice. Nothing here is graded or shared.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {topic ? `Questions about “${topic}”, made from your note.` : "Questions made from your note,"} Just for practice. Nothing here is graded or shared.
+        </p>
       </div>
 
       {error && <ErrorBanner message={error} onRetry={reload} />}

@@ -92,6 +92,7 @@ cd frontend && npm install && npm run lint && npx tsc --noEmit && npm run build
 # Browser walkthrough of the Notes flow (needs the Docker stack running and a fresh database)
 cd e2e && npm install && npx playwright install chromium && npm run notes
 npm run questions   # teacher: generate, review, bank, paper, assign as test
+npm run tests       # student takes an assigned test, sees the topic report, practises a weak topic
 npm run summaries   # teacher drafts and approves parent summaries; parent sees them (needs a fresh demo database)
 ```
 
@@ -106,7 +107,8 @@ npm run summaries   # teacher drafts and approves parent summaries; parent sees 
 | 3. OCR + Notes Library (handwriting to text, review screen, sharing, practice quiz) | Done |
 | 4. Question Bank (generate up to 3 versions, review, bank, DOCX/PDF paper, assign as test) | Done |
 | 5. Parent Summary (computed metrics, number-checked AI wording, teacher approval, parent charts) | Done |
-| 6. Assessment (student takes a test, topic report) | Next |
+| 6. Assessment (student takes a test, AI/code marking, topic report, practice this topic) | Done |
+| 7. Interview bot (text) | Next |
 | 5. Parent Summary | Planned |
 | 6. Assessment (lite) | Planned |
 | 7-8. Interview Bot (text, then voice) | Planned |

@@ -5,7 +5,8 @@
   "scripts": {
     "notes": "node notes_flow.cjs",
     "questions": "node questions_flow.cjs",
-    "summaries": "node summaries_flow.cjs"
+    "summaries": "node summaries_flow.cjs",
+    "tests": "node tests_flow.cjs"
   },
   "devDependencies": {
     "playwright": "^1.50.0"
