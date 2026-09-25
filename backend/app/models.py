@@ -10,7 +10,7 @@ from __future__ import annotations
 import enum
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -158,6 +158,86 @@ class NoteShare(Base):
 
     note: Mapped[Note] = relationship(back_populates="shares")
     school_class: Mapped[SchoolClass] = relationship()
+
+
+class QuestionSet(Base):
+    """One generated batch of questions for a note. A teacher gets up to 3 versions per note."""
+
+    __tablename__ = "question_sets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"), index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer)  # 1 balanced, 2 application, 3 recall
+    emphasis: Mapped[str] = mapped_column(String(20))
+    requested_count: Mapped[int] = mapped_column(Integer)
+    types: Mapped[list] = mapped_column(JSON)
+    difficulty: Mapped[str] = mapped_column(String(10))
+    shortfall_message: Mapped[str | None] = mapped_column(Text)
+    generation_seconds: Mapped[float | None] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    note: Mapped[Note] = relationship()
+    questions: Mapped[list[Question]] = relationship(
+        back_populates="question_set", order_by="Question.position", cascade="all, delete-orphan"
+    )
+
+
+class Question(Base):
+    """Every AI question starts as a draft. Only accepted ones enter the Question Bank."""
+
+    __tablename__ = "questions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    set_id: Mapped[int] = mapped_column(ForeignKey("question_sets.id"), index=True)
+    note_id: Mapped[int] = mapped_column(ForeignKey("notes.id"), index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    type: Mapped[str] = mapped_column(String(15))  # mcq | short | long | fill_blank | true_false
+    text: Mapped[str] = mapped_column(Text)
+    options: Mapped[list | None] = mapped_column(JSON)  # mcq and true/false only
+    answer: Mapped[str] = mapped_column(Text)  # for mcq: the text of the correct option
+    explanation: Mapped[str] = mapped_column(Text)
+    difficulty: Mapped[str] = mapped_column(String(10))
+    bloom: Mapped[str] = mapped_column(String(15))
+    topic: Mapped[str] = mapped_column(String(200))
+    marks: Mapped[float] = mapped_column(Float, default=1.0)
+    status: Mapped[str] = mapped_column(String(10), default="draft", index=True)  # draft | accepted | discarded
+    edited: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    question_set: Mapped[QuestionSet] = relationship(back_populates="questions")
+    note: Mapped[Note] = relationship()
+
+
+class Assessment(Base):
+    """A test a teacher builds from accepted questions and assigns to a class."""
+
+    __tablename__ = "assessments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    class_id: Mapped[int] = mapped_column(ForeignKey("classes.id"), index=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    school_class: Mapped[SchoolClass] = relationship()
+    items: Mapped[list[AssessmentQuestion]] = relationship(
+        back_populates="assessment", order_by="AssessmentQuestion.position", cascade="all, delete-orphan"
+    )
+
+
+class AssessmentQuestion(Base):
+    __tablename__ = "assessment_questions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    assessment_id: Mapped[int] = mapped_column(ForeignKey("assessments.id"), index=True)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"))
+    position: Mapped[int] = mapped_column(Integer)
+    marks: Mapped[float] = mapped_column(Float, default=1.0)
+
+    assessment: Mapped[Assessment] = relationship(back_populates="items")
+    question: Mapped[Question] = relationship()
 
 
 class Setting(Base):

@@ -68,8 +68,8 @@ export function splitUncertain(text: string): Array<{ text: string; uncertain: b
 }
 
 /** Downloads a file from the API. Plain links can't do this because they don't carry the login token. */
-export async function downloadFromApi(path: string, fallbackName: string): Promise<void> {
-  const { blob, filename } = await apiBlob(path);
+export async function downloadFromApi(path: string, fallbackName: string, options?: Parameters<typeof apiBlob>[1]): Promise<void> {
+  const { blob, filename } = await apiBlob(path, options);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

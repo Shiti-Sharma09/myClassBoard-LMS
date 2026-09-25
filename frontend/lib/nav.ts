@@ -12,7 +12,7 @@ export interface NavItem {
 export const NAV: Record<Role, NavItem[]> = {
   teacher: [
     { label: "Notes & OCR", href: "/teacher/notes", description: "Digitise handwritten notes and keep a notes library.", ready: true },
-    { label: "Question Bank", href: "/teacher/questions", description: "Generate questions from notes and export a paper.", ready: false },
+    { label: "Question Bank", href: "/teacher/questions", description: "Generate questions from notes and export a paper.", ready: true },
     { label: "Parent Summaries", href: "/teacher/summaries", description: "Review and approve AI progress summaries.", ready: false },
     { label: "Interview Reports", href: "/teacher/interviews", description: "See how students did in AI interviews.", ready: false },
   ],

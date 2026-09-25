@@ -7,3 +7,20 @@
 body {
   font-family: var(--font-sans);
 }
+
+/* Print / Save as PDF for a question paper: show only the paper, on plain white. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-paper,
+  .print-paper * {
+    visibility: visible;
+  }
+  .print-paper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
